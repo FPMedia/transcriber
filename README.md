@@ -1,4 +1,27 @@
-# Whisper Transcriber Web App
+<div align="center">
+
+# 🎤 Whisper Transcriber Web App
+
+[![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-orange.svg)](https://openai.com/whisper)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**A modern web application for transcribing audio files using OpenAI's Whisper API**
+
+[![Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg)](http://localhost:5000)
+[![Features](https://img.shields.io/badge/Features-Rich-purple.svg)](#features)
+[![Support](https://img.shields.io/badge/Support-Multiple%20Formats-red.svg)](#supported-audio-formats)
+
+---
+
+**🎵 Convert your audio files to text with AI-powered transcription**  
+**🌐 Beautiful web interface accessible from any device**  
+**⚡ Fast, secure, and optimized for large files**
+
+---
+
+</div>
 
 A modern web application for transcribing audio files using OpenAI's Whisper API. This application provides a beautiful, responsive web interface that replaces the original tkinter GUI.
 
