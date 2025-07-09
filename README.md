@@ -2,6 +2,8 @@
 
 # 🎤 Whisper Transcriber Web App
 
+![Whisper Transcriber](image.png)
+
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-orange.svg)](https://openai.com/whisper)
