@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Transcriber</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .transcribe-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .transcribe-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .transcribe-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .options-area {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #495057;
+            user-select: none;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 20px;
+            width: 20px;
+            background-color: #fff;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            margin-right: 10px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            background-color: #f0f4ff;
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #667eea;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .checkbox-container .checkmark:after {
+            left: 6px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-area {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .transcript-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transcript-text {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            font-size: 1em;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .loading-hint {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .upload-area {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Whisper Transcriber</h1>
+        
+        <div class="upload-area" id="upload-area">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Drop your audio file here or click to browse</div>
+            <div class="upload-hint">Supports: MP3, WAV, M4A, FLAC, OGG, WEBM, MP4</div>
+            <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.flac,.ogg,.webm,.mp4">
+        </div>
+
+        <div class="file-info" id="file-info">
+            <div class="file-name" id="file-name"></div>
+            <div class="file-size" id="file-size"></div>
+        </div>
+
+        <button class="transcribe-btn" id="transcribe-btn" disabled>
+            🎵 Transcribe Audio
+        </button>
+
+        <div class="options-area">
+            <label class="checkbox-container">
+                <input type="checkbox" id="trim-checkbox">
+                <span class="checkmark"></span>
+                Trim to first 10 minutes (saves API costs)
+            </label>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Transcribing your audio file...</div>
+            <div class="loading-hint">Large files will be automatically compressed and processed in chunks if needed.</div>
+        </div>
+
+        <div class="result-area" id="result-area">
+            <div class="transcript-container">
+                <div class="transcript-text" id="transcript-text"></div>
+            </div>
+            <div>
+                <a class="download-btn" id="download-btn" href="#" download>
+                    📥 Download Transcript
+                </a>
+                <a class="download-btn" id="download-srt-btn" href="#" download style="background:#007bff;display:none;">
+                    🎬 Download Subtitles (.srt)
+                </a>
+                <button class="clear-btn" id="clear-btn">
+                    🗑️ Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const transcribeBtn = document.getElementById('transcribe-btn');
+        const loading = document.getElementById('loading');
+        const resultArea = document.getElementById('result-area');
+        const transcriptText = document.getElementById('transcript-text');
+        const downloadBtn = document.getElementById('download-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const trimCheckbox = document.getElementById('trim-checkbox');
+        const downloadSrtBtn = document.getElementById('download-srt-btn');
+
+        let selectedFile = null;
+
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            // Check file type
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const allowedExtensions = ['mp3', 'wav', 'm4a', 'flac', 'ogg', 'webm', 'mp4'];
+            
+            if (!allowedExtensions.includes(fileExtension)) {
+                showError('Please select a valid audio file (MP3, WAV, M4A, FLAC, OGG, WEBM, MP4)');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.add('show');
+            transcribeBtn.disabled = false;
+            
+            // Hide any previous results
+            resultArea.classList.remove('show');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Transcribe button handler
+        transcribeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('audio_file', selectedFile);
+            formData.append('trim_to_10min', trimCheckbox.checked ? 'true' : 'false');
+
+            // Show loading state
+            loading.style.display = 'block';
+            transcribeBtn.disabled = true;
+            resultArea.classList.remove('show');
+
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showTranscript(data.transcript, data.download_url, data.filename, data.trimmed, data.srt_url, data.srt_filename);
+                } else {
+                    showError(data.error || 'Transcription failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                transcribeBtn.disabled = false;
+            }
+        });
+
+        function showTranscript(transcript, downloadUrl, filename, trimmed, srtUrl, srtFilename) {
+            transcriptText.textContent = transcript;
+            downloadBtn.href = downloadUrl;
+            downloadBtn.download = filename;
+            resultArea.classList.add('show');
+            
+            // SRT button
+            if (srtUrl && srtFilename) {
+                downloadSrtBtn.style.display = 'inline-block';
+                downloadSrtBtn.href = srtUrl;
+                downloadSrtBtn.download = srtFilename;
+            } else {
+                downloadSrtBtn.style.display = 'none';
+            }
+            
+            // Show trim info if applicable
+            if (trimmed) {
+                const trimInfo = document.createElement('div');
+                trimInfo.className = 'success';
+                trimInfo.textContent = '✅ Audio was trimmed to first 10 minutes to save API costs.';
+                resultArea.insertBefore(trimInfo, resultArea.firstChild);
+            }
+            
+            // Scroll to result
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            // Remove any existing error messages
+            const existingError = document.querySelector('.error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild.nextSibling);
+            
+            // Auto-remove error after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Clear button handler
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            resultArea.classList.remove('show');
+            transcribeBtn.disabled = true;
+            downloadSrtBtn.style.display = 'none';
+            
+            // Remove any error messages
+            const errors = document.querySelectorAll('.error');
+            errors.forEach(error => error.remove());
+        });
+    </script>
+</body>
+</html> 
