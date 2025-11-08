@@ -57,6 +57,13 @@ A modern web application for transcribing audio files using OpenAI's Whisper API
 
 ## Installation
 
+### 🪟 Windows Users (Recommended)
+**Quick Installation**: Double-click `install_windows.bat` and follow the prompts!
+
+For detailed Windows instructions, see [README_WINDOWS.md](README_WINDOWS.md) or [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md)
+
+### 🐧 Linux/macOS Users
+
 1. **Clone or download the project files**
 
 2. **Install dependencies**:
